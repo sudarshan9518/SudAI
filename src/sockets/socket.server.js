@@ -1,9 +1,10 @@
-const { Server, Socket } = require("socket.io")
+const { Server } = require("socket.io")
 const cookie = require("cookie")
 const jwt = require("jsonwebtoken")
 const userModel = require("../models/user.model")
 const aiService = require("../services/ai.service")
 const messageModel = require("../models/message.model")
+const {creatMemory, queryMemory} = require("../services/vector.service")
 
 function initSocketServer(httpServer){
     const io = new Server(httpServer, {})
@@ -47,18 +48,45 @@ function initSocketServer(httpServer){
             messageplayload = chatid and content
             */
 
-            await messageModel.create({
+          const message =    await messageModel.create({
                 chat : messagePayload.chat,
                 user : socket.user._id,
                 content : messagePayload.content,
                 role : "user"
 
 
-            })
+             })
 
-            const chatHistory = (await messageModel.find({
+            const vectors = await aiService.generateVector(messagePayload.content)
+
+
+             const memory = await queryMemory({
+                queryVector: vectors,
+                limit : 3,
+                metadata :{}
+            })
+            
+
+            await creatMemory({
+                vectors,
+                messageId : message._id ,
+                metadata:{
+                    chat:messagePayload.chat,
+                    user:socket.user._id,
+                    text : messagePayload.content
+                }
+
+            })
+           
+           
+
+            console.log(memory);
+            
+
+
+            const chatHistory = (await messageModel.find({ //stm
                 chat: messagePayload.chat
-            }).sort({createdAt:-1}).limit(4).lean()).reverse() // give a chat history for a current chat base on chat id 
+            }).sort({createdAt:-1}).limit(20).lean()).reverse() // give a chat history for a current chat base on chat id 
             
 
 
@@ -70,15 +98,27 @@ function initSocketServer(httpServer){
                 }
             })) // push all prevous history with current question to model
 
-            console.log(response);
+        
             
-             await messageModel.create({
+            const reponseMessage =   await messageModel.create({
                 chat : messagePayload.chat,
                 user : socket.user._id,
                 content : response,
                 role : "model"
 
 
+            })
+
+            const responseVector = await aiService.generateVector(response)
+
+            await creatMemory({
+                vectors : responseVector,
+                messageId : reponseMessage._id,
+                metadata :{
+                    chat : messagePayload.chat,
+                    user : socket.user._id,
+                    text : response
+                }
             })
 
 
