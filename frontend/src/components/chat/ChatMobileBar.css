@@ -1,0 +1,5 @@
+
+.chat-app-title { margin:0; font-size:1.1rem; font-weight: var(--font-weight-medium); }
+.chat-icon-btn { background:#0d0d0d; border:1px solid #1e1e1e; padding:8px 14px; border-radius:10px; font: inherit; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; color:#d0d0d0; }
+.chat-icon-btn:hover { background:#181818; color:#ffffff; }
+@media (min-width:960px) { .chat-mobile-bar { display:none; } }
