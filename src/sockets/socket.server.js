@@ -60,10 +60,12 @@ function initSocketServer(httpServer){
             const vectors = await aiService.generateVector(messagePayload.content)
 
 
-             const memory = await queryMemory({
+             const memory = await queryMemory({ // come from pinecone not from mongodb
                 queryVector: vectors,
                 limit : 3,
-                metadata :{}
+                metadata :{
+                    user : socket.user._id
+                }
             })
             
 
@@ -79,8 +81,8 @@ function initSocketServer(httpServer){
             })
            
            
-
-            console.log(memory);
+            //console.log(memory);
+            
             
 
 
@@ -89,14 +91,34 @@ function initSocketServer(httpServer){
             }).sort({createdAt:-1}).limit(20).lean()).reverse() // give a chat history for a current chat base on chat id 
             
 
-
-
-            const response = await aiService.generateResponse(chatHistory.map(items=>{
+            const stm = chatHistory.map(items=>{
                 return {
                     role : items.role,
                     parts :[{text : items.content}]
                 }
-            })) // push all prevous history with current question to model
+            })
+
+            const ltm = [
+                {
+                    role :"user",
+                    parts :[{
+                        text :`
+                           these are previous message from the chat , use them to generate a response 
+
+                           ${memory.map(item=> item.metadata.text).join("\n")
+
+                           }
+                        `
+                    }]
+                }
+            ]
+
+            console.log(ltm[0]);
+            console.log(stm);
+            
+
+
+            const response = await aiService.generateResponse([...ltm, ...stm]) // push all prevous history with current question to model
 
         
             
@@ -109,6 +131,9 @@ function initSocketServer(httpServer){
 
             })
 
+
+
+
             const responseVector = await aiService.generateVector(response)
 
             await creatMemory({
@@ -120,6 +145,13 @@ function initSocketServer(httpServer){
                     text : response
                 }
             })
+
+
+
+
+
+
+
 
 
             socket.emit('ai-response', {

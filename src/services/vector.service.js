@@ -20,7 +20,7 @@ async function queryMemory({queryVector, limit=5, metadata} ){
     const data = await sudaiIndex.query({
         vector : queryVector,
         topK : limit,
-        filter : metadata ?{metadata} : undefined,
+        filter : metadata || undefined,
         includeMetadata : true
     })
     return data.matches
