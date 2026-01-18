@@ -1,3 +1,5 @@
+/*
+
 const { Server } = require("socket.io")
 const cookie = require("cookie")
 const jwt = require("jsonwebtoken")
@@ -47,23 +49,29 @@ function initSocketServer(httpServer){
             /*
             messageplayload = chatid and content
             */
-
-            const [message, vectors] = await Promise.all([
-                messageModel.create({
+/*
+          const message =    await messageModel.create({
                 chat : messagePayload.chat,
                 user : socket.user._id,
                 content : messagePayload.content,
                 role : "user"
 
 
-             }),
+             })
 
-             aiService.generateVector(messagePayload.content)
+             
 
-            ])
+            const vectors = await aiService.generateVector(messagePayload.content)
 
 
-
+             const memory = await queryMemory({ // come from pinecone not from mongodb
+                queryVector: vectors,
+                limit : 3,
+                metadata :{
+                    user : socket.user._id
+                }
+            })
+            
 
             await creatMemory({
                 vectors,
@@ -82,25 +90,10 @@ function initSocketServer(httpServer){
             
 
 
-             
-            
-
-            const [memory, chatHistory] = await Promise.all([
-                queryMemory({ // come from pinecone not from mongodb
-                queryVector: vectors,
-                limit : 3,
-                metadata :{
-                    user : socket.user._id
-                }
-            }), 
-
-            messageModel.find({
+            const chatHistory = (await messageModel.find({ //stm
                 chat: messagePayload.chat
-            }).sort({createdAt:-1}).limit(20).lean().then(messages =>messages.reverse()
-            )   // give a chat history for a current chat base on chat id
-
-            ])
-
+            }).sort({createdAt:-1}).limit(20).lean()).reverse() // give a chat history for a current chat base on chat id 
+            
 
             const stm = chatHistory.map(items=>{
                 return {
@@ -124,43 +117,28 @@ function initSocketServer(httpServer){
                 }
             ]
 
-
-
-            // console.log(ltm[0]);
-            // console.log(stm);
+            console.log(ltm[0]);
+            console.log(stm);
             
 
 
             const response = await aiService.generateResponse([...ltm, ...stm]) // push all prevous history with current question to model
 
-
-            socket.emit('ai-response', {
-
-                content : response,
-                chat : messagePayload.chat
-
-
-            })
-        
-
         
             
-
-            const [reponseMessage,responseVector] = await Promise.all([
-                messageModel.create({
+            const reponseMessage =   await messageModel.create({
                 chat : messagePayload.chat,
                 user : socket.user._id,
                 content : response,
                 role : "model"
 
 
-            }),
-
-            aiService.generateVector(response)
-
-            ])
+            })
 
 
+
+
+            const responseVector = await aiService.generateVector(response)
 
             await creatMemory({
                 vectors : responseVector,
@@ -174,6 +152,20 @@ function initSocketServer(httpServer){
 
 
 
+
+
+
+
+
+
+            socket.emit('ai-response', {
+
+                content : response,
+                chat : messagePayload.chat
+
+
+            })
+
             
         })
 
@@ -184,3 +176,6 @@ function initSocketServer(httpServer){
 
 
 module.exports = initSocketServer;
+
+
+*/
