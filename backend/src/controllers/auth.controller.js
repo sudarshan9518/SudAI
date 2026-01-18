@@ -88,7 +88,36 @@ async function loginUser(req, res) {
     
 }
 
+
+
+async function logout(req, res){
+res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false // true in production (HTTPS)
+  });
+
+  return res.status(200).json({
+    message: "Logged out successfully"
+  });
+
+
+}
+
+   async function verify(req, res) {
+  if (req.user) {
+    res.json({ authenticated: true, user: req.user });
+  } else {
+    res.status(401).json({ authenticated: false });
+  }
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    logout,
+    verify
 }
+
+
+
