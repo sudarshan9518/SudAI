@@ -1,5 +1,9 @@
 .chat-layout { display: flex; height: 100dvh; background: var(--color-bg); font-size: var(--text-base); }
-.chat-main { flex: 1; display: flex; flex-direction: column; height: 100dvh; padding-top: 52px; position:relative; }
+
+
+.chat-main { flex: 1; display: flex; flex-direction: column; height: 100dvh; padding-top: calc(52px + env(safe-area-inset-top, 0)); position:relative; }
+
+
 @media (min-width: 960px) { .chat-main { padding-top: 0; } }
 @media (min-width: 960px) { .chat-layout { flex-direction: row; } }
 @media (max-width: 959px) { .chat-layout { flex-direction: column; } }
