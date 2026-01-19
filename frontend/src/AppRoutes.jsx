@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     let mounted = true
-    axios.get('http://localhost:3000/api/auth/verify', { withCredentials: true })
+    axios.get('https://sudai.onrender.com/api/auth/verify', { withCredentials: true })
       .then(() => { if (mounted) setIsAuth(true) })
       .catch(() => { if (mounted) setIsAuth(false) })
     return () => { mounted = false }
