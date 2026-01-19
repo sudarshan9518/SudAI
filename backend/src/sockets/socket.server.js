@@ -7,7 +7,11 @@ const messageModel = require("../models/message.model")
 const {creatMemory, queryMemory} = require("../services/vector.service")
 
 function initSocketServer(httpServer){
-    const io = new Server(httpServer, {})
+    const io = new Server(httpServer, {cors: {
+            origin: "http://localhost:5173",
+            allowedHeaders: [ "Content-Type", "Authorization" ],
+            credentials: true
+        }})
 
     io.use( async(socket, next)=>{// middleware of socket.io
 

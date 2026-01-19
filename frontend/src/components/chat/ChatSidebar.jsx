@@ -1,10 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
+import { deleteChat as deleteChatAction, selectChat } from '../../store/chatSlice';
 import './ChatSidebar.css';
 
 const ChatSidebar = ({ chats, activeChatId, onSelectChat, onNewChat, open }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     try {
@@ -20,6 +23,25 @@ const ChatSidebar = ({ chats, activeChatId, onSelectChat, onNewChat, open }) => 
     }
   };
 
+  const handleDeleteChat = async (e, chatId) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this chat?')) {
+      try {
+        await axios.delete(`http://localhost:3000/api/chat/${chatId}`, {
+          withCredentials: true
+        });
+        dispatch(deleteChatAction(chatId));
+        if (activeChatId === chatId) {
+          dispatch(selectChat(null));
+          onNewChat();
+        }
+      } catch (err) {
+        console.error("Delete chat error:", err);
+        alert('Failed to delete chat');
+      }
+    }
+  };
+
   return (
     <aside className={"chat-sidebar " + (open ? 'open' : '')} aria-label="Previous chats">
       <div className="sidebar-header">
@@ -28,14 +50,21 @@ const ChatSidebar = ({ chats, activeChatId, onSelectChat, onNewChat, open }) => 
       </div>
       <nav className="chat-list" aria-live="polite">
         {chats.map(c => (
-          <button
-            key={c.id}
-            className={"chat-list-item " + (c.id === activeChatId ? 'active' : '')}
-            onClick={() => onSelectChat(c.id)}
-          >
-            <span className="title-line">{c.title}</span>
-            <span className="meta-line">{c.messages.length} msg{c.messages.length !== 1 && 's'}</span>
-          </button>
+          <div key={c._id} className="chat-list-item-wrapper">
+            <button
+              className={"chat-list-item " + (c._id === activeChatId ? 'active' : '')}
+              onClick={() => onSelectChat(c._id)}
+            >
+              <span className="title-line">{c.title}</span>
+            </button>
+            <button
+              className="delete-chat-btn"
+              onClick={(e) => handleDeleteChat(e, c._id)}
+              title="Delete chat"
+            >
+              ×
+            </button>
+          </div>
         ))}
         {chats.length === 0 && <p className="empty-hint">No chats yet.</p>}
       </nav>
